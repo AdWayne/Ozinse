@@ -1,0 +1,1402 @@
+openapi: 3.0.3
+info:
+  title: Ozinse API
+  description: API для стриминговой платформы Ozinse
+  version: 1.0.0
+  contact:
+    name: Ozinse Team
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Локальный сервер
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Введите access_token без префикса Bearer
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error_code:
+          type: string
+          example: "NOT_FOUND"
+        message:
+          type: string
+          example: "Проект не найден"
+        details:
+          type: object
+          nullable: true
+
+    TokenPair:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - repeat_password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        repeat_password:
+          type: string
+          minLength: 6
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    RefreshRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        full_name:
+          type: string
+        phone:
+          type: string
+        birth_date:
+          type: string
+          example: "14 қыркүйек 2004"
+
+    ChangePasswordRequest:
+      type: object
+      required:
+        - old_password
+        - new_password
+      properties:
+        old_password:
+          type: string
+        new_password:
+          type: string
+          minLength: 6
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        user_avatar_url:
+          type: string
+          nullable: true
+        full_name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        birth_date:
+          type: string
+          nullable: true
+        role_id:
+          type: integer
+          nullable: true
+        role_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+          nullable: true
+        release_year:
+          type: integer
+          nullable: true
+        director:
+          type: string
+          nullable: true
+        producer:
+          type: string
+          nullable: true
+        cover_image_url:
+          type: string
+          nullable: true
+        banner_image_url:
+          type: string
+          nullable: true
+        keywords:
+          type: string
+          nullable: true
+        category_id:
+          type: integer
+          nullable: true
+        category_name:
+          type: string
+        age_rating_id:
+          type: integer
+          nullable: true
+        age_rating_range:
+          type: string
+        project_type:
+          type: string
+          enum: [MOVIE, SERIES]
+        duration_minutes:
+          type: integer
+          nullable: true
+        youtube_video_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        genres:
+          type: array
+          items:
+            $ref: '#/components/schemas/Genre'
+
+    Season:
+      type: object
+      properties:
+        id:
+          type: integer
+        project_id:
+          type: integer
+        season_number:
+          type: integer
+        episodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Episode'
+
+    Episode:
+      type: object
+      properties:
+        id:
+          type: integer
+        season_id:
+          type: integer
+        episode_number:
+          type: integer
+        title:
+          type: string
+          nullable: true
+        youtube_video_id:
+          type: string
+        duration:
+          type: integer
+          nullable: true
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+
+    Genre:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+
+    AgeRating:
+      type: object
+      properties:
+        id:
+          type: integer
+        range:
+          type: string
+
+    Favorite:
+      type: object
+      properties:
+        user_id:
+          type: integer
+        project_id:
+          type: integer
+        added_at:
+          type: string
+          format: date-time
+        project:
+          $ref: '#/components/schemas/ProjectShort'
+
+    ProjectShort:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        cover_image_url:
+          type: string
+          nullable: true
+        project_type:
+          type: string
+        release_year:
+          type: integer
+          nullable: true
+        duration_minutes:
+          type: integer
+          nullable: true
+
+    FeaturedBlock:
+      type: object
+      additionalProperties:
+        type: array
+        items:
+          $ref: '#/components/schemas/ProjectShort'
+
+    CreateProjectRequest:
+      type: object
+      required:
+        - title
+        - project_type
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        release_year:
+          type: integer
+        director:
+          type: string
+        producer:
+          type: string
+        cover_image_url:
+          type: string
+        banner_image_url:
+          type: string
+        keywords:
+          type: string
+        category_id:
+          type: integer
+        age_rating_id:
+          type: integer
+        project_type:
+          type: string
+          enum: [MOVIE, SERIES]
+        duration_minutes:
+          type: integer
+        youtube_video_id:
+          type: string
+        genre_ids:
+          type: array
+          items:
+            type: integer
+
+    CreateSeasonRequest:
+      type: object
+      required:
+        - season_number
+      properties:
+        season_number:
+          type: integer
+
+    CreateEpisodeRequest:
+      type: object
+      required:
+        - episode_number
+        - youtube_video_id
+      properties:
+        episode_number:
+          type: integer
+        title:
+          type: string
+        youtube_video_id:
+          type: string
+        duration:
+          type: integer
+
+    UpdateFeaturedOrderRequest:
+      type: object
+      required:
+        - block_type
+        - items
+      properties:
+        block_type:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              project_id:
+                type: integer
+              sort_order:
+                type: integer
+
+    AssignRoleRequest:
+      type: object
+      required:
+        - role_id
+      properties:
+        role_id:
+          type: integer
+
+    Role:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        permissions:
+          type: string
+
+    CreateRoleRequest:
+      type: object
+      required:
+        - name
+        - permissions
+      properties:
+        name:
+          type: string
+        permissions:
+          type: string
+
+    CreateCategoryRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+
+    CreateGenreRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+
+    CreateAgeRatingRequest:
+      type: object
+      required:
+        - range
+      properties:
+        range:
+          type: string
+
+    PaginatedProjects:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        total_pages:
+          type: integer
+
+    PaginatedUsers:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        total_pages:
+          type: integer
+
+    UploadResponse:
+      type: object
+      properties:
+        url:
+          type: string
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+tags:
+  - name: Auth
+    description: Авторизация
+  - name: Profile
+    description: Профиль пользователя
+  - name: Projects
+    description: Публичный контент
+  - name: Favorites
+    description: Избранное
+  - name: References
+    description: Справочники
+  - name: Admin - Projects
+    description: Управление проектами
+  - name: Admin - References
+    description: Управление справочниками
+  - name: Admin - Users
+    description: Управление пользователями
+  - name: Admin - Roles
+    description: Управление ролями
+  - name: Admin - Upload
+    description: Загрузка файлов
+
+paths:
+  # ==========================
+  # AUTH
+  # ==========================
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Регистрация
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Успешная регистрация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '400':
+          description: Ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Вход
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Успешный вход
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '401':
+          description: Неверный email или пароль
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Обновление токенов
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Токены обновлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+        '401':
+          description: Недействительный refresh токен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Запрос на восстановление пароля
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Инструкция отправлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # ==========================
+  # PROFILE
+  # ==========================
+  /profile/me:
+    get:
+      tags: [Profile]
+      summary: Получить профиль
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Данные пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          description: Не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags: [Profile]
+      summary: Обновить профиль
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Профиль обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '401':
+          description: Не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /profile/password:
+    put:
+      tags: [Profile]
+      summary: Изменить пароль
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Пароль изменён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Неверный текущий пароль
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==========================
+  # PROJECTS
+  # ==========================
+  /projects:
+    get:
+      tags: [Projects]
+      summary: Список проектов
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: category_id
+          in: query
+          schema:
+            type: integer
+        - name: genre_id
+          in: query
+          schema:
+            type: integer
+        - name: age_rating_id
+          in: query
+          schema:
+            type: integer
+        - name: project_type
+          in: query
+          schema:
+            type: string
+            enum: [MOVIE, SERIES]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Список проектов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProjects'
+
+  /projects/featured:
+    get:
+      tags: [Projects]
+      summary: Подборки для главного экрана
+      responses:
+        '200':
+          description: Подборки по блокам
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeaturedBlock'
+
+  /projects/{id}:
+    get:
+      tags: [Projects]
+      summary: Детальная информация о проекте
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Проект
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          description: Не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /projects/{id}/seasons:
+    get:
+      tags: [Projects]
+      summary: Сезоны и эпизоды проекта
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Список сезонов с эпизодами
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Season'
+
+  # ==========================
+  # REFERENCES
+  # ==========================
+  /categories:
+    get:
+      tags: [References]
+      summary: Список категорий
+      responses:
+        '200':
+          description: Категории
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+
+  /genres:
+    get:
+      tags: [References]
+      summary: Список жанров
+      responses:
+        '200':
+          description: Жанры
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Genre'
+
+  /age-ratings:
+    get:
+      tags: [References]
+      summary: Список возрастных ограничений
+      responses:
+        '200':
+          description: Возрастные рейтинги
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AgeRating'
+
+  # ==========================
+  # FAVORITES
+  # ==========================
+  /favorites:
+    get:
+      tags: [Favorites]
+      summary: Список избранного
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Избранное
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Favorite'
+        '401':
+          description: Не авторизован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /favorites/{project_id}:
+    post:
+      tags: [Favorites]
+      summary: Добавить в избранное
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '201':
+          description: Добавлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+    delete:
+      tags: [Favorites]
+      summary: Удалить из избранного
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: project_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Удалено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # ==========================
+  # ADMIN - PROJECTS
+  # ==========================
+  /admin/projects:
+    get:
+      tags: [Admin - Projects]
+      summary: Список проектов (админка)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Проекты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProjects'
+        '403':
+          description: Доступ запрещён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags: [Admin - Projects]
+      summary: Создать проект
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+      responses:
+        '201':
+          description: Создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+  /admin/projects/{id}:
+    put:
+      tags: [Admin - Projects]
+      summary: Обновить проект
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectRequest'
+      responses:
+        '200':
+          description: Обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+    delete:
+      tags: [Admin - Projects]
+      summary: Удалить проект
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Удалён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /admin/projects/{id}/seasons:
+    post:
+      tags: [Admin - Projects]
+      summary: Добавить сезон
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSeasonRequest'
+      responses:
+        '201':
+          description: Сезон создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Season'
+
+  /admin/seasons/{season_id}/episodes:
+    post:
+      tags: [Admin - Projects]
+      summary: Добавить эпизод
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: season_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEpisodeRequest'
+      responses:
+        '201':
+          description: Эпизод создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Episode'
+
+  /admin/projects/featured-order:
+    put:
+      tags: [Admin - Projects]
+      summary: Порядок в подборках
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFeaturedOrderRequest'
+      responses:
+        '200':
+          description: Порядок обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # ==========================
+  # ADMIN - REFERENCES
+  # ==========================
+  /admin/categories:
+    post:
+      tags: [Admin - References]
+      summary: Создать категорию
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '201':
+          description: Создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+
+  /admin/categories/{id}:
+    put:
+      tags: [Admin - References]
+      summary: Обновить категорию
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '200':
+          description: Обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+    delete:
+      tags: [Admin - References]
+      summary: Удалить категорию
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Удалена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /admin/genres:
+    post:
+      tags: [Admin - References]
+      summary: Создать жанр
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGenreRequest'
+      responses:
+        '201':
+          description: Создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Genre'
+
+  /admin/genres/{id}:
+    put:
+      tags: [Admin - References]
+      summary: Обновить жанр
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGenreRequest'
+      responses:
+        '200':
+          description: Обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+    delete:
+      tags: [Admin - References]
+      summary: Удалить жанр
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Удалён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /admin/age-ratings:
+    post:
+      tags: [Admin - References]
+      summary: Создать возрастной рейтинг
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAgeRatingRequest'
+      responses:
+        '201':
+          description: Создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgeRating'
+
+  /admin/age-ratings/{id}:
+    put:
+      tags: [Admin - References]
+      summary: Обновить возрастной рейтинг
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAgeRatingRequest'
+      responses:
+        '200':
+          description: Обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+    delete:
+      tags: [Admin - References]
+      summary: Удалить возрастной рейтинг
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Удалён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # ==========================
+  # ADMIN - USERS
+  # ==========================
+  /admin/users:
+    get:
+      tags: [Admin - Users]
+      summary: Список пользователей
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Пользователи
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUsers'
+
+  /admin/users/{user_id}/assign-role:
+    post:
+      tags: [Admin - Users]
+      summary: Назначить роль
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignRoleRequest'
+      responses:
+        '200':
+          description: Роль назначена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # ==========================
+  # ADMIN - ROLES
+  # ==========================
+  /admin/roles:
+    get:
+      tags: [Admin - Roles]
+      summary: Список ролей
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Роли
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Role'
+
+    post:
+      tags: [Admin - Roles]
+      summary: Создать роль
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoleRequest'
+      responses:
+        '201':
+          description: Роль создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+
+  /admin/roles/{id}:
+    put:
+      tags: [Admin - Roles]
+      summary: Обновить роль
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoleRequest'
+      responses:
+        '200':
+          description: Роль обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+    delete:
+      tags: [Admin - Roles]
+      summary: Удалить роль
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Роль удалена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # ==========================
+  # ADMIN - UPLOAD
+  # ==========================
+  /admin/upload:
+    post:
+      tags: [Admin - Upload]
+      summary: Загрузка файла
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Файл загружен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'

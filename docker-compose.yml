@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: ozinse_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: ozinse
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./migrations/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql
+      - ./migrations/002_insert.sql:/docker-entrypoint-initdb.d/002_insert.sql
+
+  app:
+    build: .
+    container_name: ozinse_api
+    restart: always
+    depends_on:
+      - db
+    environment:
+      PORT: 8080
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: 123
+      DB_NAME: ozinse
+      JWT_SECRET: super_secret_key
+      REFRESH_SECRET: super_secret_refresh_key
+      BASE_URL: http://localhost:8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./uploads:/root/uploads
+
+  swagger:
+    image: swaggerapi/swagger-ui
+    container_name: ozinse_swagger
+    restart: always
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./swagger.yaml:/swagger.yaml
+    environment:
+      SWAGGER_JSON: /swagger.yaml
+
+volumes:
+  pgdata:
