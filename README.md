@@ -182,8 +182,3 @@ HTTP коды: 200, 201, 400, 401, 403, 404, 500.
 Swagger UI доступен по адресу http://localhost:8081 (при запуске через Docker).
 
 Или открой `swagger.yaml` в [Swagger Editor](https://editor.swagger.io).
-
-## Лицензия
-
-MIT
-```
